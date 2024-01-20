@@ -2,8 +2,11 @@
 #pragma pack(1)
 
 #include <cstdint>
-#include <list>
-#include <stdio.h>
+#include <cstring>
+#include <cstdlib>
+#include <array>
+
+using namespace std;
 
 // ipTIME A2000UA-4dBi
 struct Radiotap {
@@ -25,12 +28,12 @@ struct Radiotap {
     uint8_t antenna0;
     uint8_t anteSig1;
     uint8_t antenna1;
-} __attribute__((__packed__));
+};
 
 struct Dot11Frame {
     uint8_t type;
     uint8_t flag;
-} __attribute__((__packed__));
+};
 
 struct BeaconFrame : Dot11Frame {
     uint16_t duration;
@@ -41,27 +44,27 @@ struct BeaconFrame : Dot11Frame {
     uint64_t timestamp;
     uint16_t beaconInterval;
     uint16_t capacityInfo;
-} __attribute__((__packed__));
+};
 
 struct Tag {
     uint8_t tagNumber;
     uint8_t tagLength;
-} __attribute__((__packed__));
+};
 
 struct SSIDParameter : Tag {
-    uint8_t SSID[7];
-} __attribute__((__packed__));
+    array<uint8_t, 32> SSID = {};
+};
 
 struct SupportedRates : Tag {
     uint8_t supportedRates[8];
-} __attribute__((__packed__));
+};
 
 struct TrafficIndicationMap : Tag {
     uint8_t DTIMCount;
     uint8_t DTIMPeriod;
     uint8_t bitmapControl;
     uint8_t PVB;
-} __attribute__((__packed__));
+};
 
 struct HTCapabilities : Tag {
     uint16_t HTCapInfo;
@@ -70,7 +73,7 @@ struct HTCapabilities : Tag {
     uint16_t HTExtCaps;
     uint32_t TxBF;
     uint8_t ASEL; 
-} __attribute__((__packed__));
+};
 
 struct HTInformation : Tag {
     uint8_t PrimaryChan;
@@ -78,12 +81,7 @@ struct HTInformation : Tag {
     uint16_t HTInfoSubset2;
     uint16_t HTInfoSubset3;
     uint8_t MCSSet[16];
-} __attribute__((__packed__));
-
-struct ExtendedCapabilities : Tag {
-
-} __attribute__((__packed__));
-
+};
 
 struct TestPacket {
     Radiotap radiotap;
@@ -94,4 +92,4 @@ struct TestPacket {
     HTCapabilities htCapabilities;
     HTInformation htInformation;
     uint32_t FCS;
-} __attribute__((__packed__));
+};
