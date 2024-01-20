@@ -10,8 +10,6 @@ struct Radiotap {
     uint8_t version;
     uint8_t pad;
     uint16_t len;
-    // std::list<uint32_t> present;
-    // std::list<uint32_t>::iterator iter = present.begin();
     uint32_t present;
     uint32_t present2;
     uint32_t present3;
@@ -27,12 +25,12 @@ struct Radiotap {
     uint8_t antenna0;
     uint8_t anteSig1;
     uint8_t antenna1;
-};
+} __attribute__((__packed__));
 
 struct Dot11Frame {
     uint8_t type;
     uint8_t flag;
-};
+} __attribute__((__packed__));
 
 struct BeaconFrame : Dot11Frame {
     uint16_t duration;
@@ -43,7 +41,57 @@ struct BeaconFrame : Dot11Frame {
     uint64_t timestamp;
     uint16_t beaconInterval;
     uint16_t capacityInfo;
-    uint8_t elementID;
-    uint8_t len;
-    uint8_t SSID[32];
-};
+} __attribute__((__packed__));
+
+struct Tag {
+    uint8_t tagNumber;
+    uint8_t tagLength;
+} __attribute__((__packed__));
+
+struct SSIDParameter : Tag {
+    uint8_t SSID[7];
+} __attribute__((__packed__));
+
+struct SupportedRates : Tag {
+    uint8_t supportedRates[8];
+} __attribute__((__packed__));
+
+struct TrafficIndicationMap : Tag {
+    uint8_t DTIMCount;
+    uint8_t DTIMPeriod;
+    uint8_t bitmapControl;
+    uint8_t PVB;
+} __attribute__((__packed__));
+
+struct HTCapabilities : Tag {
+    uint16_t HTCapInfo;
+    uint8_t A_MPDUParams;
+    uint8_t MCSSet[16];
+    uint16_t HTExtCaps;
+    uint32_t TxBF;
+    uint8_t ASEL; 
+} __attribute__((__packed__));
+
+struct HTInformation : Tag {
+    uint8_t PrimaryChan;
+    uint8_t HTInfoSubset1;
+    uint16_t HTInfoSubset2;
+    uint16_t HTInfoSubset3;
+    uint8_t MCSSet[16];
+} __attribute__((__packed__));
+
+struct ExtendedCapabilities : Tag {
+
+} __attribute__((__packed__));
+
+
+struct TestPacket {
+    Radiotap radiotap;
+    BeaconFrame beaconFrame;
+    SSIDParameter ssidParameter;
+    SupportedRates supportedRates;
+    TrafficIndicationMap trafficIndicationMap;
+    HTCapabilities htCapabilities;
+    HTInformation htInformation;
+    uint32_t FCS;
+} __attribute__((__packed__));
